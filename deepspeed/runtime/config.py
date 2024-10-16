@@ -731,6 +731,10 @@ class DeepSpeedConfig(object):
             self.global_rank = 0
             self.world_size = 1
         logger.info(f"Config mesh_device {mesh_device} world_size = {self.world_size}")
+        if self._param_dict.get('sequence_parallel_size') is not None:
+            self.sp=self._param_dict.get('sequence_parallel_size')
+        else:
+            self.sp=1
         # If elastic-mode enabled, update compute + update _param_dict
         self.elasticity_enabled = elasticity_enabled(self._param_dict)
         if self.elasticity_enabled:
@@ -926,7 +930,7 @@ class DeepSpeedConfig(object):
 
         assert (grad_acc > 0), f"Gradient accumulation steps: {grad_acc} has to be greater than 0"
 
-        assert train_batch == micro_batch * grad_acc * self.world_size, (
+        assert train_batch == micro_batch * grad_acc * self.world_size * self.sp, (
             f"Check batch related parameters. train_batch_size is not equal "
             "to micro_batch_per_gpu * gradient_acc_step * world_size "
             f"{train_batch} != {micro_batch} * {grad_acc} * {self.world_size}")
